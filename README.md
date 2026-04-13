@@ -45,14 +45,24 @@ Open Comet is an autonomous AI agent that lives in your browser's side panel. It
 - **Improved Task Resilience**: Better search-box detection and stale-UID fallbacks for higher success rates.
 - **Session Continuity**: Seamlessly resumes tasks within the same tab group and chat session.
 
-## 🛠️ Installation
+## 🛠️ Installation & Setup
 
-1.  Clone the repository: `git clone https://github.com/princechouhan19/OpenCometAI.git`
-2.  Open Chrome and go to `chrome://extensions`.
-3.  Enable **Developer Mode** (top-right toggle).
-4.  Click **Load unpacked** and select the root directory of this project.
-5.  Pin **Open Comet** from your extensions menu.
-6.  Open the side panel, go to **Settings**, and add your API keys.
+1.  **Get the Source**: 
+    - **Download**: Get the [Open Comet v1.1.0 release](https://github.com/princechouhan19/OpenCometAI/releases/tag/v1.1.0) and unzip it.
+    - **Clone**: Alternatively, run `git clone https://github.com/princechouhan19/OpenCometAI.git`
+2.  **Install the Extension**:
+    - Open Chrome and go to `chrome://extensions`.
+    - Enable **Developer Mode** (top-right toggle).
+    - Click **Load unpacked** and select the root directory (unzipped folder or cloned repo).
+    - Pin **Open Comet** from your extensions menu.
+3.  **Account & License**:
+    - Create an account on [opencomet.onrender.com/profile](https://opencomet.onrender.com/profile).
+    - Generate a **License Key** from your dashboard.
+    - In the Open Comet extension, login with your credentials and add your **License Key**.
+4.  **Configuration**:
+    - Open the side panel, go to **Settings**, and select your **Provider** and **Model**.
+    - Add your **API Key** for the chosen provider.
+5.  **Run Your First Task**: Type a command in the input box and watch the agent work!
 
 ## 🗺️ Roadmap
 
