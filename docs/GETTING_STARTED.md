@@ -30,11 +30,15 @@ Since Open Comet is currently in developer preview, it must be installed as an *
 
 ---
 
-## Account & License Setup
+## Local-Only Setup
 
-1.  **Create an Account**: Visit [opencomet.onrender.com/profile](https://opencomet.onrender.com/profile) to sign up.
-2.  **Generate License Key**: Once logged in, generate a **License Key** from your profile dashboard.
-3.  **Activate in Extension**: Open the Open Comet side panel, log in with your credentials, and paste your **License Key** to activate the agent.
+No account or license activation is required.
+
+- Open Comet runs in local-first mode.
+- Configure only your preferred provider/model and API key (or use Ollama locally).
+- Local data controls are available in-app:
+  - **History → Clear** removes saved task history.
+  - **Token & Cost Usage → Clear all usage data** removes local usage counters.
 
 ---
 

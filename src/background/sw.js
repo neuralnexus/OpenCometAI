@@ -32,15 +32,9 @@ import { createEmptyAgentState } from './state.js';
 import { executeAction, describeAction } from './actions.js';
 import { detectSkillsForTask } from '../lib/skill-matcher.js';
 import { getAllSkills } from '../lib/skills.js';
-import { validateLicenseKey } from '../lib/license-service.js';
 
 // -- Global agent state --------------------------------------------------------
 let agentState = createEmptyAgentState();
-
-async function getStoredLicenseRecord() {
-  const data = await chrome.storage.local.get('opencometLicense');
-  return data?.opencometLicense || {};
-}
 
 function trackUsage(usage) {
   if (!usage) return;
@@ -438,19 +432,6 @@ async function legacyHandleExportData(msg, respond) {
 async function handleStart(msg, respond) {
   if (agentState.running) { respond({ ok: false, error: 'Already running' }); return; }
 
-  const storedLicense = await getStoredLicenseRecord();
-  const licenseKey = String(storedLicense?.key || '').trim();
-  if (!licenseKey) {
-    respond({ ok: false, error: 'No license key saved. Open Settings -> License & Activation first.' });
-    return;
-  }
-
-  const validation = await validateLicenseKey(licenseKey);
-  if (!validation.ok || !validation.valid) {
-    respond({ ok: false, error: validation.error || 'License is inactive.' });
-    return;
-  }
-
   const settings = await getSettings();
   if (!isProviderConfigured(settings)) { respond({ ok: false, error: 'No provider configured' }); return; }
 
@@ -491,7 +472,7 @@ async function handleStart(msg, respond) {
     attachments:          cloneAttachments(msg.attachments || []),
     skills:               cloneSkills(msg.skills || []),
     profileData:          { ...(settings.profileData || {}) },
-    licenseStatus:        validation.license || { valid: true },
+    licenseStatus:        { valid: true, mode: 'local' },
     sessionApprovedHosts: startHost ? [startHost] : [],
     plannedHosts:         startHost ? [startHost] : [],
     taskMemory: { visitedHosts: startHost ? [startHost] : [], pageSnapshots: [], loopHints: [], workSummary: '' },
@@ -2368,4 +2349,3 @@ async function groupLooseTabs(tabIds, title = 'Open Comet Research') {
     return null;
   }
 }
-

@@ -1,0 +1,25 @@
+{
+  "name": "opencometai",
+  "version": "1.0.0",
+  "description": "Local-first Chrome extension for browser automation with AI assistance",
+  "scripts": {
+    "test": "npm run check:static && npm run test:functional",
+    "check:static": "node ./scripts/check-static.mjs",
+    "test:functional": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neuralnexus/OpenCometAI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/neuralnexus/OpenCometAI/issues"
+  },
+  "homepage": "https://github.com/neuralnexus/OpenCometAI#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

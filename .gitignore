@@ -2,6 +2,8 @@
 node_modules/
 dist/
 build/
+playwright-report/
+test-results/
 .npm
 npm-debug.log*
 

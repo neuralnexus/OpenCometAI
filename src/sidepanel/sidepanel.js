@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-import { requestTrialLicense, requestPremiumLicense, validateLicenseKey } from '../lib/license-service.js';
-import { DEFAULT_APP_BACKEND_URL } from '../lib/app-backend.js';
-
 // sidepanel.js — Open Comet UI controller
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -59,11 +55,6 @@ const runContextHint = $('runContextHint');
 const researchOptionsBar = $('researchOptionsBar');
 const scrapeOptionsBar = $('scrapeOptionsBar');
 const initialConvoMarkup = $('convoArea')?.innerHTML || '';
-const licenseKeyInput = $('licenseKeyInput');
-const licenseEmailInput = $('licenseEmailInput');
-const requestTrialBtn = $('requestTrialBtn');
-const requestPremiumBtn = $('requestPremiumBtn');
-const validateLicenseBtn = $('validateLicenseBtn');
 const licenseStatusBadge = $('licenseStatusBadge');
 const licenseStatusText = $('licenseStatusText');
 
@@ -185,11 +176,7 @@ function showView(name) {
   if (name === 'auth') {
     if (bottomNav) bottomNav.style.display = 'none';
   } else {
-    // Check if we should show bottom nav (only if logged in)
-    chrome.storage.local.get(['auth', 'opencometLicense'], (data) => {
-      const hasAuth = Boolean(data.auth?.token);
-      if (hasAuth && bottomNav) bottomNav.style.display = 'flex';
-    });
+    if (bottomNav) bottomNav.style.display = 'flex';
   }
 
   closeModeDropdown();
@@ -213,7 +200,7 @@ function openSettingsPage(page = 'home') {
     profile: 'Profile',
     skills: 'Skills',
     usage: 'Token & Cost Usage',
-    license: 'License & Activation',
+    license: 'Local Access',
   };
 
   if (page === 'skills') {
@@ -1541,90 +1528,21 @@ async function loadSettings() {
 
 function setLicenseFeedback({ valid = false, message = '', badgeLabel } = {}) {
   if (licenseStatusBadge) {
-    licenseStatusBadge.textContent = badgeLabel || (valid ? 'ACTIVE' : 'INACTIVE');
-    licenseStatusBadge.classList.toggle('ok', Boolean(valid));
-    licenseStatusBadge.classList.toggle('inactive', !Boolean(valid));
+    licenseStatusBadge.textContent = badgeLabel || 'LOCAL';
+    licenseStatusBadge.classList.add('ok');
+    licenseStatusBadge.classList.remove('inactive');
   }
   if (licenseStatusText) {
-    licenseStatusText.textContent = message || (valid ? 'License is active.' : (licenseKeyInput?.value?.trim() ? 'Validate the saved key to refresh status.' : 'Add a key to enable automation.'));
+    licenseStatusText.textContent = message || 'Local-first mode is active. No account or license is required.';
   }
 }
 
-function updateLicenseFromRecord(record = {}) {
-  const status = record.status || {};
-  const valid = Boolean(status.valid);
-  const expiresAt = status.expiresAt ? new Date(status.expiresAt) : null;
-  const message = expiresAt
-    ? `Expires ${expiresAt.toLocaleString()}`
-    : record.key
-      ? 'Saved key. Validate to refresh status.'
-      : 'Enter a license key to activate the agent.';
-  setLicenseFeedback({ valid, message });
+function updateLicenseFromRecord() {
+  setLicenseFeedback({ valid: true, badgeLabel: 'LOCAL', message: 'Local-first mode is active. No account or license is required.' });
 }
 
 function loadStoredLicense() {
-  chrome.storage.local.get('opencometLicense', data => {
-    const record = data.opencometLicense || {};
-    if (licenseKeyInput && record.key) licenseKeyInput.value = record.key;
-    if (licenseEmailInput && record.email) licenseEmailInput.value = record.email;
-    updateLicenseFromRecord(record);
-  });
-}
-
-async function handleValidateLicense() {
-  if (!licenseKeyInput) return;
-  const key = licenseKeyInput.value.trim();
-  if (!key) {
-    setLicenseFeedback({ valid: false, message: 'Paste a license key above and click validate.' });
-    return;
-  }
-  setLicenseFeedback({ valid: false, message: 'Validating license…' });
-  const result = await validateLicenseKey(key);
-  if (!result.ok) {
-    setLicenseFeedback({ valid: false, message: result.error || 'Validation failed.' });
-    return;
-  }
-  const record = {
-    key,
-    status: result.license || {},
-    email: licenseEmailInput?.value?.trim() || '',
-    lastCheckedAt: Date.now(),
-  };
-  chrome.storage.local.set({ opencometLicense: record });
-  const expiresAt = record.status.expiresAt ? new Date(record.status.expiresAt) : null;
-  const message = expiresAt ? `Expires ${expiresAt.toLocaleString()}` : 'License verified.';
-  setLicenseFeedback({ valid: Boolean(result.valid), message });
-}
-
-async function handleLicenseRequest(action, button, badgeLabel) {
-  if (!licenseEmailInput) return;
-  const email = licenseEmailInput.value.trim();
-  if (!email) {
-    setLicenseFeedback({ valid: false, message: 'Enter an email to request a key.' });
-    return;
-  }
-  button && (button.disabled = true);
-  setLicenseFeedback({ valid: false, message: 'Requesting key…' });
-  const response = await action(email);
-  button && (button.disabled = false);
-  if (!response.ok) {
-    setLicenseFeedback({ valid: false, message: response.error || 'Request failed.' });
-    return;
-  }
-  const data = response.data || {};
-  const key = data.key || '';
-  const license = data.license || {};
-  if (licenseKeyInput && key) licenseKeyInput.value = key;
-  const record = {
-    key,
-    status: license,
-    email,
-    lastCheckedAt: Date.now(),
-  };
-  chrome.storage.local.set({ opencometLicense: record });
-  const expiresAt = license.expiresAt ? new Date(license.expiresAt) : null;
-  const message = expiresAt ? `${badgeLabel} expires ${expiresAt.toLocaleString()}` : `${badgeLabel} issued.`;
-  setLicenseFeedback({ valid: true, message });
+  updateLicenseFromRecord();
 }
 
 const saveSettingsBtn = $('saveSettingsBtn');
@@ -1658,186 +1576,37 @@ $('ollamaVisionModelInput')?.addEventListener('input', () => {
   }
 });
 // ══════════════════════════════════════════════════════════════════════════════
-// AUTH & PROFILE SYNC (New in v1.2)
+// AUTH & PROFILE SYNC (disabled in local-first mode)
 // ══════════════════════════════════════════════════════════════════════════════
-const API_BASE = `${DEFAULT_APP_BACKEND_URL.replace(/\/+$/, '')}/api`;
 
-async function authFetch(path, options = {}) {
-  const { auth = {} } = await chrome.storage.local.get('auth');
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
-  if (auth.token) headers['Authorization'] = `Bearer ${auth.token}`;
-  
-  const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || `Request failed with status ${resp.status}`);
-  }
-  return resp.json();
-}
-
-function updateAuthUi(user = null) {
+function updateAuthUi() {
   const brief = $('profileUserBrief');
   const status = $('profileAuthStatus');
   if (!brief || !status) return;
 
-  if (user) {
-    brief.style.display = 'block';
-    status.style.display = 'none';
-    if ($('profileUserDisplayName')) $('profileUserDisplayName').textContent = user.fullName || user.name || 'User';
-    if ($('profileUserEmail')) $('profileUserEmail').textContent = user.email || '';
-    if ($('authDot')) $('authDot').className = 'api-dot ok';
-  } else {
-    brief.style.display = 'none';
-    status.style.display = 'block';
-    if ($('authDot')) $('authDot').className = 'api-dot';
-  }
+  if ($('authStatusText')) $('authStatusText').textContent = 'Local-only mode enabled';
+  brief.style.display = 'none';
+  status.style.display = 'block';
+  if ($('authDot')) $('authDot').className = 'api-dot ok';
+  if ($('profileUserDisplayName')) $('profileUserDisplayName').textContent = 'Local profile';
+  if ($('profileUserEmail')) $('profileUserEmail').textContent = 'Stored only on this device';
 }
 
 async function loadCloudProfile() {
-  try {
-    const { auth = {} } = await chrome.storage.local.get('auth');
-    if (!auth.token) {
-      updateAuthUi(null);
-      return null;
-    }
-
-    const data = await authFetch('/auth/me');
-    if (data.user) {
-      updateAuthUi(data.user);
-      return data.user;
-    }
-  } catch (err) {
-    console.warn('[Auth] Not signed in or session expired');
-    updateAuthUi(null);
-  }
+  updateAuthUi();
   return null;
 }
 
+// Keep this migration cleanup for older installs that may still have cloud auth/license keys saved.
+async function clearLegacyAccountAndLicenseData() {
+  await chrome.storage.local.remove(['auth', 'opencometLicense']);
+}
+
 async function ensureOnboarding() {
-  const { auth = {}, opencometLicense = {} } = await chrome.storage.local.get(['auth', 'opencometLicense']);
   const bottomNav = $('bottomNav');
-
-  if (!auth.token) {
-    showView('auth');
-    if (bottomNav) bottomNav.style.display = 'none';
-    return;
-  }
-
-  // Logged in!
   if (bottomNav) bottomNav.style.display = 'flex';
-
-  const licenseValid = Boolean(opencometLicense.status?.valid);
-  if (!licenseValid) {
-    showView('settings');
-    openSettingsPage('license');
-    return;
-  }
-
-  // All good
   showView('agent');
 }
-
-async function handleLogin() {
-  const email = $('authEmail')?.value.trim();
-  const password = $('authPassword')?.value;
-  const note = $('authStatusNote');
-  if (!email || !password) return;
-  
-  if (note) { note.style.display = 'block'; note.className = ''; note.textContent = 'Signing in...'; }
-  
-  try {
-    const data = await authFetch('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    await chrome.storage.local.set({ auth: { token: data.token, user: data.user } });
-    if (note) { note.className = 'ok'; note.textContent = 'Signed in successfully!'; }
-    updateAuthUi(data.user);
-    
-    // Check next onboarding step
-    setTimeout(() => {
-        if (note) note.style.display = 'none';
-        ensureOnboarding();
-    }, 1000);
-
-    // Populate fields from sync
-    syncFieldsFromUser(data.user);
-  } catch (err) {
-    if (note) { note.className = 'error'; note.textContent = err.message; }
-  }
-}
-
-async function handleRegister() {
-  const name = $('regName')?.value.trim();
-  const email = $('regEmail')?.value.trim();
-  const password = $('regPassword')?.value;
-  const note = $('authStatusNote');
-  
-  if (!name || !email || !password) return;
-  if (note) { note.style.display = 'block'; note.className = ''; note.textContent = 'Creating account...'; }
-  
-  try {
-    const data = await authFetch('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password }),
-    });
-    await chrome.storage.local.set({ auth: { token: data.token, user: data.user } });
-    if (note) { note.className = 'ok'; note.textContent = 'Account created!'; }
-    updateAuthUi(data.user);
-    
-    setTimeout(() => {
-        if (note) note.style.display = 'none';
-        ensureOnboarding();
-    }, 1000);
-  } catch (err) {
-    if (note) { note.className = 'error'; note.textContent = err.message; }
-  }
-}
-
-function syncFieldsFromUser(user) {
-  if (!user) return;
-  if ($('profileFullNameInput')) $('profileFullNameInput').value = user.fullName || user.name || '';
-  if ($('profileEmailInput')) $('profileEmailInput').value = user.email || '';
-  if ($('profilePhoneInput')) $('profilePhoneInput').value = user.phone || '';
-  if ($('profileAddressInput')) $('profileAddressInput').value = user.address || '';
-  if ($('profileCompanyInput')) $('profileCompanyInput').value = user.company || '';
-  if ($('profileWebsiteInput')) $('profileWebsiteInput').value = user.website || '';
-  if ($('profileNotesInput')) $('profileNotesInput').value = user.notes || '';
-}
-
-// Wire up auth UI
-$('btnOpenAuth')?.addEventListener('click', () => {
-    $('loginForm') && ($('loginForm').style.display = 'block');
-    $('registerForm') && ($('registerForm').style.display = 'none');
-    $('view-auth')?.classList.add('active'); // Still works as a modal if called from settings
-});
-// (Auth back btn removed as it's now onboarding view)
-
-$('linkToRegister')?.addEventListener('click', () => {
-  $('loginForm') && ($('loginForm').style.display = 'none');
-  $('registerForm') && ($('registerForm').style.display = 'block');
-});
-$('linkToLogin')?.addEventListener('click', () => {
-  $('loginForm') && ($('loginForm').style.display = 'block');
-  $('registerForm') && ($('registerForm').style.display = 'none');
-});
-$('btnLoginSubmit')?.addEventListener('click', handleLogin);
-$('btnRegisterSubmit')?.addEventListener('click', handleRegister);
-$('btnLogout')?.addEventListener('click', async () => {
-  await chrome.storage.local.remove('auth');
-  updateAuthUi(null);
-  ensureOnboarding();
-});
-$('btnSyncProfile')?.addEventListener('click', async () => {
-  const btn = $('btnSyncProfile');
-  if (btn) btn.textContent = 'Syncing...';
-  const user = await loadCloudProfile();
-  syncFieldsFromUser(user);
-  if (btn) { btn.textContent = 'Synced ✓'; setTimeout(() => btn.textContent = 'Sync from Cloud', 2000); }
-});
 
 async function saveSettings() {
     const apiKeyInput   = $('apiKeyInput');
@@ -1912,19 +1681,6 @@ async function saveSettings() {
         setTimeout(() => { btn.textContent = 'Save settings'; }, 1800);
       }
       
-      // If signed in, also sync profile data to cloud
-      chrome.storage.local.get('auth', async ({ auth }) => {
-        if (auth?.token) {
-          try {
-            await authFetch('/auth/profile', {
-              method: 'PATCH',
-              body: JSON.stringify(profileData),
-            });
-          } catch (e) {
-            console.error('[Sync] Profile upload failed:', e);
-          }
-        }
-      });
     });
 }
 if (saveSettingsBtn) {
@@ -1932,8 +1688,12 @@ if (saveSettingsBtn) {
 }
 
 // Initial load
-ensureOnboarding();
-loadCloudProfile();
+(async () => {
+  await clearLegacyAccountAndLicenseData();
+  ensureOnboarding();
+  await loadCloudProfile();
+  updateAuthUi();
+})();
 
 function updateApiStatus(s) {
   const dot  = $('apiDot');
@@ -2740,16 +2500,6 @@ document.querySelectorAll('.ptype-btn').forEach(tab => {
   });
 });
 
-if (validateLicenseBtn) {
-  validateLicenseBtn.addEventListener('click', handleValidateLicense);
-}
-if (requestTrialBtn) {
-  requestTrialBtn.addEventListener('click', () => handleLicenseRequest(requestTrialLicense, requestTrialBtn, 'Trial key'));
-}
-if (requestPremiumBtn) {
-  requestPremiumBtn.addEventListener('click', () => handleLicenseRequest(requestPremiumLicense, requestPremiumBtn, 'Premium key'));
-}
-
 // ══════════════════════════════════════════════════════════════════════════════
 // USAGE DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2847,6 +2597,3 @@ renderUsageDashboard();
 loadSettings();
 loadStoredLicense();
 requestAgentStateHydration({ force: true });
-
-
-

@@ -249,41 +249,26 @@
           <div class="settings-nav-desc">View overall token usage and estimated API costs by model.</div>
         </button>
         <button class="settings-nav-card" data-settings-target="license">
-          <div class="settings-nav-title">License &amp; Activation</div>
-          <div class="settings-nav-desc">Validate your key, request a trial or premium license, and learn about the ad-gated flow.</div>
+          <div class="settings-nav-title">Local Access</div>
+          <div class="settings-nav-desc">Local-first mode status. No website account or license key is required.</div>
         </button>
       </div>
 
       <div class="s-section settings-subpage-section license-section" data-settings-page="license">
         <div class="license-shell">
           <div class="license-hero">
-            <div class="license-kicker">Secure access</div>
-            <div class="license-hero-text">Activate Open Comet, claim your trial, or request a premium key from your website.</div>
+            <div class="license-kicker">Local-first access</div>
+            <div class="license-hero-text">Open Comet runs without online account activation or website licensing.</div>
           </div>
           <div class="license-status-card">
             <div class="license-status-row">
-              <span class="license-status-badge inactive" id="licenseStatusBadge">INACTIVE</span>
-              <span class="license-status-text" id="licenseStatusText">Enter a license key to activate the agent.</span>
+              <span class="license-status-badge ok" id="licenseStatusBadge">LOCAL</span>
+              <span class="license-status-text" id="licenseStatusText">Local-first mode is active. No account or license is required.</span>
             </div>
           </div>
           <div class="license-form-card">
-            <div class="license-field">
-              <label class="ai-input-label">License key</label>
-              <div class="license-inline-input">
-              <input type="text" class="ai-input" id="licenseKeyInput" placeholder="oc-abc123..." autocomplete="off" />
-              <button class="ai-action-btn" id="validateLicenseBtn" type="button">Validate</button>
-              </div>
-            </div>
-            <div class="license-field">
-              <label class="ai-input-label">Email for license requests</label>
-              <input type="email" class="ai-input" id="licenseEmailInput" placeholder="you@example.com" />
-            </div>
-            <div class="license-cta-row">
-              <button class="ai-action-btn" id="requestTrialBtn" type="button">Request trial key</button>
-              <button class="ai-action-btn secondary" id="requestPremiumBtn" type="button">Request premium key</button>
-            </div>
             <div class="license-note">
-              Trial keys expire on the release date. After launch, free users can unlock daily access through your website's ad-gated flow and paste that key here.
+              This build is local-first: no website trial, premium, ad-gated, or account-linked license flow is used. Configure your provider API key (or Ollama) in Settings to run tasks.
             </div>
           </div>
         </div>
@@ -657,23 +642,16 @@
       </div>
 
       <div class="s-section settings-subpage-section" data-settings-page="profile">
-        <div class="s-section-title">Cloud Sync & Account</div>
+        <div class="s-section-title">Account (disabled in local mode)</div>
         <div class="s-field s-field-last" id="profileAuthStatus">
           <div class="api-status-row" id="authStatusRow">
             <span class="api-dot" id="authDot"></span>
-            <span class="api-status-text" id="authStatusText">Not signed in</span>
+            <span class="api-status-text" id="authStatusText">Local-only mode enabled</span>
           </div>
-          <button class="ollama-refresh-btn" id="btnOpenAuth" style="margin: 8px 0 0">
-            Sign In / Register
-          </button>
         </div>
         <div class="s-field s-field-last" id="profileUserBrief" style="display:none">
-          <div style="font-size: 13px; font-weight: 600; color: var(--tx1);" id="profileUserDisplayName">User</div>
-          <div style="font-size: 11.5px; color: var(--tx3);" id="profileUserEmail">email@example.com</div>
-          <div style="display:flex; gap: 8px; margin-top: 10px;">
-            <button class="skill-action-btn" id="btnSyncProfile">Sync from Cloud</button>
-            <button class="skill-action-btn danger" id="btnLogout">Sign Out</button>
-          </div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--tx1);" id="profileUserDisplayName">Local profile</div>
+          <div style="font-size: 11.5px; color: var(--tx3);" id="profileUserEmail">Stored only on this device</div>
         </div>
       </div>
 
@@ -835,57 +813,26 @@
 
     </div><!-- /skills-view -->
     
-    <!-- ── AUTH VIEW ── -->
-    <div class="view auth-view active" id="view-auth">
+    <!-- ── LOCAL MODE INFO VIEW (legacy auth screen replacement) ── -->
+    <div class="view auth-view" id="view-auth">
       <div class="auth-box">
         <div class="auth-hero">
            <img src="../../assets/icons/icon128.png" alt="logo" class="auth-hero-logo">
            <div class="auth-hero-title">Open Comet</div>
-           <div class="auth-hero-sub">Your personal browser automation companion</div>
+           <div class="auth-hero-sub">Local-first mode</div>
         </div>
-        
+
         <div class="auth-body">
           <div class="auth-form" id="loginForm">
-             <div class="auth-title-large">Welcome back</div>
+            <div class="auth-title-large">No account required</div>
             <div class="s-field">
-              <label class="s-label">Email</label>
-              <input type="email" class="s-input" id="authEmail" placeholder="you@example.com" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Password</label>
-              <input type="password" class="s-input" id="authPassword" placeholder="••••••••" />
-            </div>
-            <div class="auth-actions">
-              <button class="save-btn" id="btnLoginSubmit">Sign In</button>
-              <div class="auth-toggle-note">
-                Don't have an account? <span class="auth-link" id="linkToRegister">Sign Up</span>
+              <div class="api-status-text" style="line-height:1.6;">
+                This build runs without website account sign-in, registration, or license activation.
+                Configure your provider API key (or Ollama) in Settings and start tasks directly.
               </div>
             </div>
           </div>
-          
-          <div class="auth-form" id="registerForm" style="display:none">
-            <div class="auth-title-large">Create Account</div>
-            <div class="s-field">
-              <label class="s-label">Display Name</label>
-              <input type="text" class="s-input" id="regName" placeholder="Your name" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Email</label>
-              <input type="email" class="s-input" id="regEmail" placeholder="you@example.com" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Password</label>
-              <input type="password" class="s-input" id="regPassword" placeholder="Min 8 characters" />
-            </div>
-            <div class="auth-actions">
-              <button class="save-btn" id="btnRegisterSubmit">Create Account</button>
-              <div class="auth-toggle-note">
-                 Already have an account? <span class="auth-link" id="linkToLogin">Sign In</span>
-              </div>
-            </div>
-          </div>
-          
-          <div id="authStatusNote" style="margin-top: 12px; font-size: 11.5px; text-align: center; display: none;"></div>
+
         </div>
       </div>
     </div><!-- /view-auth -->
@@ -935,7 +882,3 @@
 <script type="module" src="sidepanel.js"></script>
 </body>
 </html>
-
-
-
-
