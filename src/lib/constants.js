@@ -10,7 +10,6 @@ export const STORAGE_KEYS = {
   LANGSEARCH: 'opencometLangSearch',
   EXPORTS:    'opencometExports',
   TOKEN_USAGE:'tokenUsage',
-  LICENSE:     'opencometLicense',
 };
 
 /** Default user settings */
@@ -205,4 +204,3 @@ export const MODEL_PRICING = {
   'mistral-large-latest': { prompt: 2.00, completion: 6.00 },
   'pixtral-large-2411': { prompt: 2.00, completion: 6.00 },
 };
-

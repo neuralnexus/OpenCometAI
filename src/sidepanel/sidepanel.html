@@ -841,50 +841,20 @@
         <div class="auth-hero">
            <img src="../../assets/icons/icon128.png" alt="logo" class="auth-hero-logo">
            <div class="auth-hero-title">Open Comet</div>
-           <div class="auth-hero-sub">Your personal browser automation companion</div>
+           <div class="auth-hero-sub">Local-first mode</div>
         </div>
-        
+
         <div class="auth-body">
           <div class="auth-form" id="loginForm">
-             <div class="auth-title-large">Welcome back</div>
+            <div class="auth-title-large">No account required</div>
             <div class="s-field">
-              <label class="s-label">Email</label>
-              <input type="email" class="s-input" id="authEmail" placeholder="you@example.com" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Password</label>
-              <input type="password" class="s-input" id="authPassword" placeholder="••••••••" />
-            </div>
-            <div class="auth-actions">
-              <button class="save-btn" id="btnLoginSubmit">Sign In</button>
-              <div class="auth-toggle-note">
-                Don't have an account? <span class="auth-link" id="linkToRegister">Sign Up</span>
+              <div class="api-status-text" style="line-height:1.6;">
+                This build runs without website account sign-in, registration, or license activation.
+                Configure your provider API key (or Ollama) in Settings and start tasks directly.
               </div>
             </div>
           </div>
-          
-          <div class="auth-form" id="registerForm" style="display:none">
-            <div class="auth-title-large">Create Account</div>
-            <div class="s-field">
-              <label class="s-label">Display Name</label>
-              <input type="text" class="s-input" id="regName" placeholder="Your name" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Email</label>
-              <input type="email" class="s-input" id="regEmail" placeholder="you@example.com" />
-            </div>
-            <div class="s-field">
-              <label class="s-label">Password</label>
-              <input type="password" class="s-input" id="regPassword" placeholder="Min 8 characters" />
-            </div>
-            <div class="auth-actions">
-              <button class="save-btn" id="btnRegisterSubmit">Create Account</button>
-              <div class="auth-toggle-note">
-                 Already have an account? <span class="auth-link" id="linkToLogin">Sign In</span>
-              </div>
-            </div>
-          </div>
-          
+
           <div id="authStatusNote" style="margin-top: 12px; font-size: 11.5px; text-align: center; display: none;"></div>
         </div>
       </div>
@@ -935,6 +905,5 @@
 <script type="module" src="sidepanel.js"></script>
 </body>
 </html>
-
 
 

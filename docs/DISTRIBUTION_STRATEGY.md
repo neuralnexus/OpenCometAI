@@ -13,12 +13,12 @@
 
 ## Practical launch strategy
 
-1. Keep premium logic, prompt logic, and provider API keys on the backend.
-1. Keep any optional premium logic outside the extension when needed, but avoid mandatory account/license gating for core use.
-2. Ship the extension as a bundled production build instead of raw source files.
-3. Minify and obfuscate the built bundle before uploading to the Chrome Web Store.
-4. Disable source maps for the store package.
-5. Apply abuse/rate-limit controls without mandatory account/license activation for local-first users.
+1. Keep core extension behavior local-first and avoid mandatory website account/license dependencies.
+2. Keep provider API keys user-managed in the extension settings (or use local Ollama).
+3. Ship the extension as a bundled production build instead of raw source files.
+4. Minify and obfuscate the built bundle before uploading to the Chrome Web Store.
+5. Disable source maps for the store package.
+6. Apply abuse/rate-limit controls without mandatory account or license activation.
 
 ## Best next implementation step
 
