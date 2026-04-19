@@ -211,7 +211,7 @@ test('source code contains no telemetry SDK domains', async () => {
           await walk(entry, `${relPath}/`);
           continue;
         }
-        if (!entry.isFile || !/\.(js|html|json|css)$/i.test(relPath)) continue;
+        if (!entry.isFile || !/\.(js|html|json|css)$/.test(relPath)) continue;
         const text = (await readFile(entry)).toLowerCase();
         for (const token of blocked) {
           if (!text.includes(token)) continue;
