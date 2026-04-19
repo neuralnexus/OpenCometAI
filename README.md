@@ -56,7 +56,7 @@ Open Comet is an autonomous AI agent that lives in your browser's side panel. My
 
 1.  **Get the Source**: 
     - **Download**: Get the [Open Comet v1.1.0 release](https://github.com/princechouhan19/OpenCometAI/releases/tag/v1.1.0) and unzip it.
-    - **Clone**: Alternatively, run `git clone https://github.com/princechouhan19/OpenCometAI.git`
+    - **Clone**: Alternatively, run `git clone https://github.com/neuralnexus/OpenCometAI `
 2.  **Install the Extension**:
     - Open Chrome and go to `chrome://extensions`.
     - Enable **Developer Mode** (top-right toggle).
