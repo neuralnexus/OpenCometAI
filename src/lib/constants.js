@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS = {
   provider:            'openai',
   apiKey:              '',
   model:               '',
+  providerApiKeys:     {},
+  providerModels:      {},
   ollamaBaseUrl:       'http://127.0.0.1:11434',
   providerBaseUrl:     '',
   providerSupportsVision: false,
@@ -139,11 +141,11 @@ export const PROTECTED_ACTION_LABELS = {
 
 /** AI provider defaults */
 export const PROVIDER_DEFAULTS = {
-  openai:    { model: 'gpt-4o',                    label: 'OpenAI' },
-  anthropic: { model: 'claude-sonnet-4-20250514',   label: 'Anthropic' },
-  gemini:    { model: 'gemini-1.5-flash',           label: 'Google Gemini' },
+  openai:    { model: 'gpt-5.4',                    label: 'OpenAI' },
+  anthropic: { model: 'claude-opus-4-7',            label: 'Anthropic' },
+  gemini:    { model: 'gemini-3.1-flash-lite-preview', label: 'Google Gemini' },
   groq:      { model: 'llama-3.3-70b-versatile',   label: 'Groq' },
-  mistral:   { model: 'mistral-small-2506',         label: 'Mistral' },
+  mistral:   { model: 'devstral-2512',              label: 'Mistral' },
   deepseek:  { model: 'deepseek-chat',              label: 'DeepSeek' },
   kimi:      { model: 'kimi-k2.5',                  label: 'Kimi' },
   glm:       { model: 'glm-4.7',                    label: 'GLM' },
@@ -153,11 +155,11 @@ export const PROVIDER_DEFAULTS = {
 
 /** Model options shown per provider in the settings UI */
 export const PROVIDER_MODELS = {
-  openai:    ['gpt-4o', 'gpt-4o-mini', 'o1'],
-  anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001', 'claude-opus-4-6'],
-  gemini:    ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
+  openai:    ['gpt-5.4', 'gpt-5.4-mini', 'o1'],
+  anthropic: ['claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-20250514'],
+  gemini:    ['gemini-3.1-flash-lite-preview', 'gemini-3.1-flash', 'gemini-3.1-pro'],
   groq:      ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
-  mistral:   ['mistral-small-2506', 'mistral-large-latest', 'pixtral-large-2411'],
+  mistral:   ['devstral-2512', 'mistral-vibe', 'mistral-large-latest'],
   deepseek:  ['deepseek-chat', 'deepseek-reasoner'],
   kimi:      ['kimi-k2.5', 'kimi-k2-thinking', 'kimi-k2-turbo-preview'],
   glm:       ['glm-4.7', 'glm-4.5-air', 'glm-4.5v'],
@@ -177,16 +179,22 @@ export const SKILL_MSG = {
 /** Approximate pricing per 1 million tokens for cost estimation */
 export const MODEL_PRICING = {
   // OpenAI
+  'gpt-5.4': { prompt: 2.50, completion: 10.00 },
+  'gpt-5.4-mini': { prompt: 0.15, completion: 0.60 },
   'gpt-4o': { prompt: 2.50, completion: 10.00 },
   'gpt-4o-mini': { prompt: 0.15, completion: 0.60 },
   'o1': { prompt: 15.00, completion: 60.00 },
   
   // Anthropic
+  'claude-opus-4-7': { prompt: 15.00, completion: 75.00 },
   'claude-sonnet-4-20250514': { prompt: 3.00, completion: 15.00 },
   'claude-haiku-4-5-20251001': { prompt: 0.25, completion: 1.25 },
   'claude-opus-4-6': { prompt: 15.00, completion: 75.00 },
   
   // Gemini
+  'gemini-3.1-flash-lite-preview': { prompt: 0.075, completion: 0.30 },
+  'gemini-3.1-flash': { prompt: 0.10, completion: 0.40 },
+  'gemini-3.1-pro': { prompt: 1.25, completion: 5.00 },
   'gemini-1.5-flash': { prompt: 0.075, completion: 0.30 },
   'gemini-1.5-pro': { prompt: 1.25, completion: 5.00 },
   'gemini-2.0-flash': { prompt: 0.10, completion: 0.40 },
@@ -200,6 +208,8 @@ export const MODEL_PRICING = {
   'llama-3.1-8b-instant': { prompt: 0.05, completion: 0.08 },
   
   // Mistral
+  'devstral-2512': { prompt: 0.20, completion: 0.60 },
+  'mistral-vibe': { prompt: 0.20, completion: 0.60 },
   'mistral-small-2506': { prompt: 0.20, completion: 0.60 },
   'mistral-large-latest': { prompt: 2.00, completion: 6.00 },
   'pixtral-large-2411': { prompt: 2.00, completion: 6.00 },

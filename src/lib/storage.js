@@ -8,7 +8,7 @@ import { STORAGE_KEYS, DEFAULT_SETTINGS } from './constants.js';
 export async function getSettings() {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
   const stored = data[STORAGE_KEYS.SETTINGS] || {};
-  return {
+  const merged = {
     ...DEFAULT_SETTINGS,
     ...stored,
     profileData: {
@@ -16,11 +16,12 @@ export async function getSettings() {
       ...(stored.profileData || {}),
     },
   };
+  return normalizeProviderScopedSettings(merged);
 }
 
 export async function saveSettings(settings) {
   const current = await getSettings();
-  const merged = {
+  const mergedRaw = {
     ...current,
     ...(settings || {}),
     profileData: {
@@ -28,6 +29,7 @@ export async function saveSettings(settings) {
       ...((settings || {}).profileData || {}),
     },
   };
+  const merged = normalizeProviderScopedSettings(mergedRaw, { onSave: true });
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: merged });
 }
 
@@ -71,7 +73,7 @@ export async function initStorage() {
     return;
   }
 
-  const merged = {
+  const mergedRaw = {
     ...DEFAULT_SETTINGS,
     ...data[STORAGE_KEYS.SETTINGS],
     profileData: {
@@ -79,7 +81,55 @@ export async function initStorage() {
       ...(data[STORAGE_KEYS.SETTINGS]?.profileData || {}),
     },
   };
+  const merged = normalizeProviderScopedSettings(mergedRaw, { onSave: true });
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: merged });
+}
+
+function normalizeProviderScopedSettings(settings = {}, options = {}) {
+  const provider = String(settings.provider || 'openai').toLowerCase();
+  const providerApiKeys = sanitizeMap(settings.providerApiKeys);
+  const providerModels = sanitizeMap(settings.providerModels);
+
+  // Backward compatibility: migrate legacy top-level apiKey/model into scoped maps.
+  if (provider !== 'ollama') {
+    const legacyKey = String(settings.apiKey || '').trim();
+    const legacyModel = String(settings.model || '').trim();
+    if (legacyKey && !providerApiKeys[provider]) providerApiKeys[provider] = legacyKey;
+    if (legacyModel && !providerModels[provider]) providerModels[provider] = legacyModel;
+  }
+
+  // Persist explicitly provided top-level values for the currently active provider.
+  if (options.onSave && provider !== 'ollama') {
+    providerApiKeys[provider] = String(settings.apiKey || '').trim();
+    providerModels[provider] = String(settings.model || '').trim();
+  }
+
+  const resolvedApiKey = provider === 'ollama'
+    ? String(settings.apiKey || '').trim()
+    : String(providerApiKeys[provider] || '').trim();
+  const resolvedModel = provider === 'ollama'
+    ? String(settings.model || '').trim()
+    : String(providerModels[provider] || '').trim();
+
+  return {
+    ...settings,
+    provider,
+    providerApiKeys,
+    providerModels,
+    apiKey: resolvedApiKey,
+    model: resolvedModel,
+  };
+}
+
+function sanitizeMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const out = {};
+  for (const [key, val] of Object.entries(value)) {
+    const normalizedKey = String(key || '').toLowerCase().trim();
+    if (!normalizedKey) continue;
+    out[normalizedKey] = String(val || '').trim();
+  }
+  return out;
 }
 
 // ── Skills storage (v1.1) ─────────────────────────────────────────────────────
