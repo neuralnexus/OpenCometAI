@@ -182,6 +182,7 @@ test('source code contains no telemetry SDK domains', async () => {
       'googletagmanager.com',
       'telemetry',
     ];
+    const sourceFilePattern = /\.(js|html|json|css)$/;
     const allowedTelemetryPhrase = 'Usage is tracked locally on this device';
     const matches = [];
 
@@ -211,7 +212,7 @@ test('source code contains no telemetry SDK domains', async () => {
           await walk(entry, `${relPath}/`);
           continue;
         }
-        if (!entry.isFile || !/\.(js|html|json|css)$/.test(relPath)) continue;
+        if (!entry.isFile || !sourceFilePattern.test(relPath)) continue;
         const text = (await readFile(entry)).toLowerCase();
         for (const token of blocked) {
           if (!text.includes(token)) continue;
