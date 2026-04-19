@@ -27,6 +27,13 @@
 
 Open Comet is an autonomous AI agent that lives in your browser's side panel. It operates on a **"Zero-Data" architecture**, ensuring your privacy by keeping history local while providing high-fidelity execution for research, browsing, and multi-step automation.
 
+## 🔒 Privacy & Licensing Guarantees
+
+- **No telemetry SDKs or analytics beacons** are bundled with the extension.
+- **No account, seat, or license key is required** to use Open Comet.
+- **Local-first by default**: history, usage counters, and settings stay on-device.
+- **MIT licensed** codebase for unrestricted use under the project license terms.
+
 ## 🚀 Key Features
 
 - **Autonomous Browsing**: Executes complex, multi-step workflows across any website.
