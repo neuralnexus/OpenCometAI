@@ -391,15 +391,16 @@ function getProviderCurrentModel(provider, settings, scopedModels) {
 
 function getQuickSelectorModels(provider, settings, scopedModels) {
   const key = String(provider || '').toLowerCase();
-  let presetModels = PROVIDER_MODELS[key] || [];
+  const defaultModels = PROVIDER_MODELS[key] || [];
+  let presetModels = defaultModels;
   if (key === 'ollama') {
-    presetModels = ollamaModelCatalog.all.length ? ollamaModelCatalog.all : (PROVIDER_MODELS.ollama || []);
+    presetModels = ollamaModelCatalog.all.length ? ollamaModelCatalog.all : defaultModels;
   }
   const currentModel = getProviderCurrentModel(key, settings, scopedModels);
   if (key === 'custom') {
     return currentModel ? [currentModel] : [];
   }
-  const models = [...new Set([...presetModels, currentModel].filter(Boolean))];
+  const models = [...new Set([...presetModels, currentModel])].filter(Boolean);
   return models;
 }
 
@@ -463,7 +464,7 @@ async function selectDropdownModel(provider, modelId) {
   settings.apiKey = selectedProvider === 'ollama' ? '' : String(settings.providerApiKeys[selectedProvider] || '').trim();
   settings.model = modelId;
   // DeepSeek/Kimi/GLM calls route through provider-specific OpenAI-compatible gateways.
-  // If no base URL is saved yet, use getProviderDefaultBaseUrl(provider) to keep the new selection runnable.
+  // If no base URL is saved yet, use getProviderDefaultBaseUrl(selectedProvider) to keep the new selection runnable.
   if (['deepseek', 'kimi', 'glm'].includes(selectedProvider) && !String(settings.providerBaseUrl || '').trim()) {
     settings.providerBaseUrl = getProviderDefaultBaseUrl(selectedProvider);
   }
