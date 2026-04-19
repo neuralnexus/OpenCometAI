@@ -1,0 +1,27 @@
+{
+  "name": "opencometai",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">   <img src=\"assets/icons/icon128.png\" width=\"100\" alt=\"Open Comet Logo\" /> </p>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neuralnexus/OpenCometAI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/neuralnexus/OpenCometAI/issues"
+  },
+  "homepage": "https://github.com/neuralnexus/OpenCometAI#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}
