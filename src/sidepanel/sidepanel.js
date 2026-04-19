@@ -380,16 +380,21 @@ function isProviderEnabledInQuickSelector(provider, settings, scopedKeys) {
 function getProviderCurrentModel(provider, settings, scopedModels) {
   const key = String(provider || '').toLowerCase();
   if (key === 'ollama') {
-    return String(settings.ollamaTextModel || settings.model || '').trim();
+    const ollamaModel = settings.ollamaTextModel || settings.model || '';
+    return String(ollamaModel).trim();
   }
-  return String(scopedModels[key] || (key === String(settings.provider || '').toLowerCase() ? settings.model : '') || '').trim();
+  const activeProvider = String(settings.provider || '').toLowerCase();
+  const fallbackModel = key === activeProvider ? settings.model : '';
+  const scopedModel = scopedModels[key] || fallbackModel || '';
+  return String(scopedModel).trim();
 }
 
 function getQuickSelectorModels(provider, settings, scopedModels) {
   const key = String(provider || '').toLowerCase();
-  const presetModels = key === 'ollama'
-    ? (ollamaModelCatalog.all.length ? ollamaModelCatalog.all : (PROVIDER_MODELS.ollama || []))
-    : (PROVIDER_MODELS[key] || []);
+  let presetModels = PROVIDER_MODELS[key] || [];
+  if (key === 'ollama') {
+    presetModels = ollamaModelCatalog.all.length ? ollamaModelCatalog.all : (PROVIDER_MODELS.ollama || []);
+  }
   const currentModel = getProviderCurrentModel(key, settings, scopedModels);
   if (key === 'custom') {
     return currentModel ? [currentModel] : [];
@@ -414,8 +419,7 @@ async function toggleModelSelector() {
   if (settings.apiKey && activeProvider !== 'ollama') scopedKeys[activeProvider] = String(settings.apiKey || '').trim();
   if (settings.model && activeProvider !== 'ollama') scopedModels[activeProvider] = String(settings.model || '').trim();
 
-  const providers = [activeProvider, ...Object.keys(PROVIDER_MODELS).filter(p => p !== activeProvider)]
-    .filter((provider, index, arr) => arr.indexOf(provider) === index)
+  const providers = [...new Set([activeProvider, ...Object.keys(PROVIDER_MODELS).filter(p => p !== activeProvider)])]
     .filter(provider => isProviderEnabledInQuickSelector(provider, settings, scopedKeys));
   if (!providers.length) providers.push(activeProvider);
 
@@ -458,6 +462,8 @@ async function selectDropdownModel(provider, modelId) {
   settings.providerModels[selectedProvider] = modelId;
   settings.apiKey = selectedProvider === 'ollama' ? '' : String(settings.providerApiKeys[selectedProvider] || '').trim();
   settings.model = modelId;
+  // DeepSeek/Kimi/GLM calls route through provider-specific OpenAI-compatible gateways.
+  // If no base URL is saved yet, use getProviderDefaultBaseUrl(provider) to keep the new selection runnable.
   if (['deepseek', 'kimi', 'glm'].includes(selectedProvider) && !String(settings.providerBaseUrl || '').trim()) {
     settings.providerBaseUrl = getProviderDefaultBaseUrl(selectedProvider);
   }
