@@ -100,6 +100,8 @@ test('utility helpers normalize hostnames and parse fenced JSON payloads', async
     const utils = await import(chrome.runtime.getURL('src/lib/utils.js'));
     return {
       host: utils.getHostFromUrl('https://WWW.Example.com/path?q=1'),
+      badHost: utils.getHostFromUrl('not-a-url'),
+      emptyHost: utils.getHostFromUrl(''),
       normalizedHost: utils.normalizeHost('WWW.EXAMPLE.com/docs'),
       escaped: utils.escapeAttr('a"b\\c'),
       stripped: utils.stripStepPrefix('✅ Completed step'),
@@ -108,6 +110,8 @@ test('utility helpers normalize hostnames and parse fenced JSON payloads', async
   });
 
   expect(result.host).toBe('example.com');
+  expect(result.badHost).toBe('');
+  expect(result.emptyHost).toBe('');
   expect(result.normalizedHost).toBe('example.com');
   expect(result.escaped).toBe('a\\"b\\\\c');
   expect(result.stripped).toBe('Completed step');
@@ -158,7 +162,15 @@ test('skill matcher auto-detects relevant skills and skips already active ones',
 
 test('source code contains no telemetry SDK domains', async () => {
   const disallowedMatches = await sidepanelPage.evaluate(async () => {
-    const root = await new Promise((resolve) => chrome.runtime.getPackageDirectoryEntry(resolve));
+    const root = await new Promise((resolve, reject) => {
+      chrome.runtime.getPackageDirectoryEntry((entry) => {
+        if (!entry) {
+          reject(new Error('Failed to access extension package directory.'));
+          return;
+        }
+        resolve(entry);
+      });
+    });
     const blocked = [
       'sentry.io',
       'segment.io',
@@ -204,7 +216,9 @@ test('source code contains no telemetry SDK domains', async () => {
       }
     }
 
-    const srcDir = await new Promise((resolve, reject) => root.getDirectory('src', {}, resolve, reject));
+    const srcDir = await new Promise((resolve, reject) => {
+      root.getDirectory('src', {}, resolve, () => reject(new Error('Unable to access src directory in extension package.')));
+    });
     await walk(srcDir, 'src/');
     return matches;
   });
