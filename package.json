@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npm run check:static && npm run test:functional",
     "check:static": "node ./scripts/check-static.mjs",
-    "test:functional": "playwright test"
+    "test:functional": "xvfb-run -a playwright test"
   },
   "repository": {
     "type": "git",

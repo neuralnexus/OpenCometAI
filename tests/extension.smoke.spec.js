@@ -27,7 +27,7 @@ test.beforeAll(async () => {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencometai-pw-'));
 
   context = await chromium.launchPersistentContext(userDataDir, {
-    headless: true,
+    headless: false,
     args: [
       `--disable-extensions-except=${EXTENSION_PATH}`,
       `--load-extension=${EXTENSION_PATH}`,
@@ -158,7 +158,7 @@ test('skill matcher auto-detects relevant skills and skips already active ones',
 
 test('source code contains no telemetry SDK domains', async () => {
   const disallowedMatches = await sidepanelPage.evaluate(async () => {
-    const root = await chrome.runtime.getPackageDirectoryEntry();
+    const root = await new Promise((resolve) => chrome.runtime.getPackageDirectoryEntry(resolve));
     const blocked = [
       'sentry.io',
       'segment.io',
