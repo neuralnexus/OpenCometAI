@@ -4,7 +4,6 @@
 
 - The extension no longer depends on account or license services.
 - Browser-agent planning/action prompts run from the extension runtime.
-- The extension no longer needs to ship the strongest browser-agent system prompt.
 
 ## What still cannot be hidden fully
 

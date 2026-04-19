@@ -55,11 +55,6 @@ const runContextHint = $('runContextHint');
 const researchOptionsBar = $('researchOptionsBar');
 const scrapeOptionsBar = $('scrapeOptionsBar');
 const initialConvoMarkup = $('convoArea')?.innerHTML || '';
-const licenseKeyInput = $('licenseKeyInput');
-const licenseEmailInput = $('licenseEmailInput');
-const requestTrialBtn = $('requestTrialBtn');
-const requestPremiumBtn = $('requestPremiumBtn');
-const validateLicenseBtn = $('validateLicenseBtn');
 const licenseStatusBadge = $('licenseStatusBadge');
 const licenseStatusText = $('licenseStatusText');
 
@@ -1547,19 +1542,7 @@ function updateLicenseFromRecord() {
 }
 
 function loadStoredLicense() {
-  if (licenseKeyInput) licenseKeyInput.value = '';
-  if (licenseEmailInput) licenseEmailInput.value = '';
   updateLicenseFromRecord();
-}
-
-async function handleValidateLicense() {
-  setLicenseFeedback({ valid: true, badgeLabel: 'LOCAL', message: 'License checks are disabled in local-first mode.' });
-}
-
-async function handleLicenseRequest(_action, button, _badgeLabel) {
-  button && (button.disabled = true);
-  setLicenseFeedback({ valid: true, badgeLabel: 'LOCAL', message: 'Website license requests are disabled in local-first mode.' });
-  button && (button.disabled = false);
 }
 
 const saveSettingsBtn = $('saveSettingsBtn');
@@ -1596,7 +1579,7 @@ $('ollamaVisionModelInput')?.addEventListener('input', () => {
 // AUTH & PROFILE SYNC (disabled in local-first mode)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function updateAuthUi(user = null) {
+function updateAuthUi() {
   const brief = $('profileUserBrief');
   const status = $('profileAuthStatus');
   if (!brief || !status) return;
@@ -1605,15 +1588,16 @@ function updateAuthUi(user = null) {
   brief.style.display = 'none';
   status.style.display = 'block';
   if ($('authDot')) $('authDot').className = 'api-dot ok';
-  if ($('profileUserDisplayName')) $('profileUserDisplayName').textContent = user?.fullName || user?.name || 'Local profile';
-  if ($('profileUserEmail')) $('profileUserEmail').textContent = user?.email || 'Stored only on this device';
+  if ($('profileUserDisplayName')) $('profileUserDisplayName').textContent = 'Local profile';
+  if ($('profileUserEmail')) $('profileUserEmail').textContent = 'Stored only on this device';
 }
 
 async function loadCloudProfile() {
-  updateAuthUi(null);
+  updateAuthUi();
   return null;
 }
 
+// Keep this migration cleanup for older installs that may still have cloud auth/license keys saved.
 async function clearLegacyAccountAndLicenseData() {
   await chrome.storage.local.remove(['auth', 'opencometLicense']);
 }
@@ -1623,61 +1607,6 @@ async function ensureOnboarding() {
   if (bottomNav) bottomNav.style.display = 'flex';
   showView('agent');
 }
-
-async function handleLogin() {
-  const note = $('authStatusNote');
-  if (note) {
-    note.style.display = 'block';
-    note.className = '';
-    note.textContent = 'Cloud sign-in is disabled in local-first mode.';
-  }
-}
-
-async function handleRegister() {
-  const note = $('authStatusNote');
-  if (note) {
-    note.style.display = 'block';
-    note.className = '';
-    note.textContent = 'Cloud registration is disabled in local-first mode.';
-  }
-}
-
-function syncFieldsFromUser(user) {
-  if (!user) return;
-  if ($('profileFullNameInput')) $('profileFullNameInput').value = user.fullName || user.name || '';
-  if ($('profileEmailInput')) $('profileEmailInput').value = user.email || '';
-  if ($('profilePhoneInput')) $('profilePhoneInput').value = user.phone || '';
-  if ($('profileAddressInput')) $('profileAddressInput').value = user.address || '';
-  if ($('profileCompanyInput')) $('profileCompanyInput').value = user.company || '';
-  if ($('profileWebsiteInput')) $('profileWebsiteInput').value = user.website || '';
-  if ($('profileNotesInput')) $('profileNotesInput').value = user.notes || '';
-}
-
-// Wire up auth UI
-$('btnOpenAuth')?.addEventListener('click', () => {
-    const note = $('authStatusText');
-    if (note) note.textContent = 'Cloud account features are disabled in local-first mode.';
-});
-// (Auth back btn removed as it's now onboarding view)
-
-$('linkToRegister')?.addEventListener('click', () => {
-  $('loginForm') && ($('loginForm').style.display = 'none');
-  $('registerForm') && ($('registerForm').style.display = 'block');
-});
-$('linkToLogin')?.addEventListener('click', () => {
-  $('loginForm') && ($('loginForm').style.display = 'block');
-  $('registerForm') && ($('registerForm').style.display = 'none');
-});
-$('btnLoginSubmit')?.addEventListener('click', handleLogin);
-$('btnRegisterSubmit')?.addEventListener('click', handleRegister);
-$('btnLogout')?.addEventListener('click', async () => {
-  updateAuthUi(null);
-});
-$('btnSyncProfile')?.addEventListener('click', async () => {
-  const btn = $('btnSyncProfile');
-  if (btn) btn.textContent = 'Cloud disabled';
-  if (btn) { setTimeout(() => btn.textContent = 'Cloud disabled', 2000); }
-});
 
 async function saveSettings() {
     const apiKeyInput   = $('apiKeyInput');
@@ -1762,8 +1691,8 @@ if (saveSettingsBtn) {
 (async () => {
   await clearLegacyAccountAndLicenseData();
   ensureOnboarding();
-  loadCloudProfile();
-  updateAuthUi(null);
+  await loadCloudProfile();
+  updateAuthUi();
 })();
 
 function updateApiStatus(s) {
@@ -2570,16 +2499,6 @@ document.querySelectorAll('.ptype-btn').forEach(tab => {
     updateConnectionFields?.(currentProvider);
   });
 });
-
-if (validateLicenseBtn) {
-  validateLicenseBtn.addEventListener('click', handleValidateLicense);
-}
-if (requestTrialBtn) {
-  requestTrialBtn.addEventListener('click', () => handleLicenseRequest(null, requestTrialBtn, 'Trial key'));
-}
-if (requestPremiumBtn) {
-  requestPremiumBtn.addEventListener('click', () => handleLicenseRequest(null, requestPremiumBtn, 'Premium key'));
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // USAGE DASHBOARD
