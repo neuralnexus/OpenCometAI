@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npm run check:static && npm run test:functional",
     "check:static": "node ./scripts/check-static.mjs",
-    "test:functional": "playwright test"
+    "test:functional": "xvfb-run -a playwright test"
   },
   "repository": {
     "type": "git",
@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/neuralnexus/OpenCometAI/issues"
