@@ -198,7 +198,12 @@ test('source code contains no telemetry SDK domains', async () => {
 
     async function walk(dirEntry, prefix = '') {
       const reader = dirEntry.createReader();
-      const entries = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+      const entries = [];
+      while (true) {
+        const batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        if (!batch.length) break;
+        entries.push(...batch);
+      }
       for (const entry of entries) {
         const relPath = `${prefix}${entry.name}`;
         if (entry.isDirectory) {
