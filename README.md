@@ -25,7 +25,7 @@
 
 ---
 
-Open Comet is an autonomous AI agent that lives in your browser's side panel. It operates on a **"Zero-Data" architecture**, ensuring your privacy by keeping history local while providing high-fidelity execution for research, browsing, and multi-step automation.
+Open Comet is an autonomous AI agent that lives in your browser's side panel. My version operates on a **"Zero-Data" architecture**, ensuring your privacy by keeping history local while providing high-fidelity execution for research, browsing, and multi-step automation. Server-Side license requirements and telemetry are removed in this version of the software. 
 
 ## 🚀 Key Features
 
