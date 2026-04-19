@@ -2,11 +2,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PROVIDER_MODELS = {
-  openai:    ['gpt-4o', 'gpt-4o-mini', 'o1'],
-  anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001', 'claude-opus-4-6'],
-  gemini:    ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
+  openai:    ['gpt-5.4', 'gpt-5.4-mini', 'o1'],
+  anthropic: ['claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-4-20250514'],
+  gemini:    ['gemini-3.1-flash-lite-preview', 'gemini-3.1-flash', 'gemini-3.1-pro'],
   groq:      ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
-  mistral:   ['mistral-small-2506', 'mistral-large-latest', 'pixtral-large-2411'],
+  mistral:   ['devstral-2512', 'mistral-vibe', 'mistral-large-latest'],
   deepseek:  ['deepseek-chat', 'deepseek-reasoner'],
   kimi:      ['kimi-k2.5', 'kimi-k2-thinking', 'kimi-k2-turbo-preview'],
   glm:       ['glm-4.7', 'glm-4.5-air', 'glm-4.5v'],
@@ -15,8 +15,8 @@ const PROVIDER_MODELS = {
 };
 
 const PROVIDER_LABELS = {
-  openai: 'GPT-4o', anthropic: 'Claude Sonnet',
-  gemini: 'Gemini Flash', groq: 'LLaMA 3.3', mistral: 'Mistral Small',
+  openai: 'GPT 5.4', anthropic: 'Claude Opus 4.7',
+  gemini: 'Gemini 3.1 Flash Lite', groq: 'LLaMA 3.3', mistral: 'Devstral 2512',
   deepseek: 'DeepSeek Chat', kimi: 'Kimi', glm: 'GLM', custom: 'OpenAI Compatible', ollama: 'Ollama',
 };
 
@@ -32,6 +32,56 @@ let renderedStepIndexes = new Set();
 let restoredTaskSessionKey = '';
 let ollamaModelCatalog = { all: [], text: [], vision: [], recommended: [] };
 let currentSettingsPage = 'home';
+let providerApiKeys = {};
+let providerModels = {};
+
+function sanitizeProviderMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const out = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const normalized = String(key || '').toLowerCase().trim();
+    if (!normalized) continue;
+    out[normalized] = String(entry || '').trim();
+  }
+  return out;
+}
+
+function setProviderScopedDraft(provider, { apiKey, model } = {}) {
+  const key = String(provider || '').toLowerCase();
+  if (!key || key === 'ollama') return;
+  providerApiKeys[key] = String(apiKey || '').trim();
+  providerModels[key] = String(model || '').trim();
+}
+
+function getProviderScopedDraft(provider) {
+  const key = String(provider || '').toLowerCase();
+  return {
+    apiKey: String(providerApiKeys[key] || '').trim(),
+    model: String(providerModels[key] || '').trim(),
+  };
+}
+
+function rememberCurrentProviderDraft() {
+  if (currentProvider === 'ollama') return;
+  const apiKey = currentProvider === 'custom'
+    ? ($('customApiKeyInput')?.value.trim() || '')
+    : ($('apiKeyInput')?.value.trim() || '');
+  const model = currentProvider === 'custom'
+    ? ($('customModelInput')?.value.trim() || '')
+    : ($('modelInput')?.value.trim() || '');
+  setProviderScopedDraft(currentProvider, { apiKey, model });
+}
+
+function applyProviderDraft(provider) {
+  const { apiKey, model } = getProviderScopedDraft(provider);
+  if (provider === 'custom') {
+    if ($('customApiKeyInput')) $('customApiKeyInput').value = apiKey;
+    if ($('customModelInput')) $('customModelInput').value = model;
+  } else if (provider !== 'ollama') {
+    if ($('apiKeyInput')) $('apiKeyInput').value = apiKey;
+    if ($('modelInput')) $('modelInput').value = model;
+  }
+}
 
 // ── Sounds ────────────────────────────────────────────────────────────────────
 function playNotificationSound(type = 'complete') {
@@ -1286,19 +1336,20 @@ if (providerGrid) {
   providerGrid.addEventListener('click', e => {
     const card = e.target.closest('.provider-card');
     if (!card) return;
+    rememberCurrentProviderDraft();
     document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     currentProvider = card.dataset.provider;
+    applyProviderDraft(currentProvider);
     renderModelChips(currentProvider);
     updateConnectionFields(currentProvider);
-    const mi = $('modelInput');
-    if (mi) mi.value = '';
   });
 }
 
 // Handler for Provider Type Tabs
 document.querySelectorAll('.ptype-btn').forEach(tab => {
   tab.addEventListener('click', () => {
+    rememberCurrentProviderDraft();
     const type = tab.dataset.type;
     document.querySelectorAll('.ptype-btn').forEach(t => t.classList.remove('selected'));
     tab.classList.add('selected');
@@ -1315,6 +1366,7 @@ document.querySelectorAll('.ptype-btn').forEach(tab => {
       currentProvider = selectedCloud ? selectedCloud.dataset.provider : 'openai';
     }
     
+    applyProviderDraft(currentProvider);
     renderModelChips(currentProvider);
     updateConnectionFields(currentProvider);
   });
@@ -1443,6 +1495,10 @@ async function loadSettings() {
     const settings = resp?.settings;
     if (!settings) return;
     const p = settings.provider || 'openai';
+    providerApiKeys = sanitizeProviderMap(settings.providerApiKeys);
+    providerModels = sanitizeProviderMap(settings.providerModels);
+    if (settings.apiKey) providerApiKeys[p] = String(settings.apiKey || '').trim();
+    if (settings.model) providerModels[p] = String(settings.model || '').trim();
     currentProvider = p;
     document.querySelectorAll('.provider-card').forEach(c => c.classList.toggle('selected', c.dataset.provider === p));
     renderModelChips(p);
@@ -1476,18 +1532,16 @@ async function loadSettings() {
     const autoExportScrapesInput = $('autoExportScrapesInput');
     const useSubAgentsInput = $('useSubAgentsInput');
 
-    if (settings.apiKey) {
-      if (p === 'custom' && customApiKeyInput) customApiKeyInput.value = settings.apiKey;
-      else if (apiKeyInput) apiKeyInput.value = settings.apiKey;
-    }
+    const scopedApiKey = String(providerApiKeys[p] || settings.apiKey || '').trim();
+    if (customApiKeyInput) customApiKeyInput.value = p === 'custom' ? scopedApiKey : '';
+    if (apiKeyInput) apiKeyInput.value = p === 'custom' ? '' : scopedApiKey;
     if (ollamaBaseUrlInput) ollamaBaseUrlInput.value = settings.ollamaBaseUrl || 'http://127.0.0.1:11434';
     if (providerBaseUrlInput) providerBaseUrlInput.value = settings.providerBaseUrl || getProviderDefaultBaseUrl(p);
     if (providerSupportsVisionInput) providerSupportsVisionInput.checked = Boolean(settings.providerSupportsVision);
     
-    if (settings.model) {
-      if (p === 'custom' && customModelInput) customModelInput.value = settings.model;
-      else if (modelInput) modelInput.value = settings.model;
-    }
+    const scopedModel = String(providerModels[p] || settings.model || '').trim();
+    if (customModelInput) customModelInput.value = p === 'custom' ? scopedModel : '';
+    if (modelInput) modelInput.value = p === 'custom' ? '' : scopedModel;
     if (ollamaTextModelInput) ollamaTextModelInput.value = settings.ollamaTextModel || settings.model || '';
     if (ollamaVisionModelInput) ollamaVisionModelInput.value = settings.ollamaVisionModel || settings.model || '';
     if (settings.maxSteps        && maxStepsInput)  maxStepsInput.value = settings.maxSteps;
@@ -1520,7 +1574,7 @@ async function loadSettings() {
 
     updateApiStatus(settings);
     updateDrStatus(settings);
-    updateModelPill(p, p === 'ollama' ? settings : settings.model);
+    updateModelPill(p, p === 'ollama' ? settings : scopedModel);
     renderModelChips(p);
     if (p === 'ollama') refreshOllamaModels({ silent: true });
   });
@@ -1609,6 +1663,7 @@ async function ensureOnboarding() {
 }
 
 async function saveSettings() {
+    rememberCurrentProviderDraft();
     const apiKeyInput   = $('apiKeyInput');
     const ollamaBaseUrlInput = $('ollamaBaseUrlInput');
     const providerBaseUrlInput = $('providerBaseUrlInput');
@@ -1629,6 +1684,17 @@ async function saveSettings() {
       notes: $('profileNotesInput') ? $('profileNotesInput').value.trim() : '',
     };
 
+    const providerApiKeysDraft = { ...providerApiKeys };
+    const providerModelsDraft = { ...providerModels };
+    if (currentProvider !== 'ollama') {
+      providerApiKeysDraft[currentProvider] = currentProvider === 'custom'
+        ? ($('customApiKeyInput')?.value.trim() || '')
+        : ($('apiKeyInput')?.value.trim() || '');
+      providerModelsDraft[currentProvider] = currentProvider === 'custom'
+        ? ($('customModelInput')?.value.trim() || '')
+        : ($('modelInput')?.value.trim() || '');
+    }
+
     const settings = {
       provider:        currentProvider,
       apiKey:          currentProvider === 'custom' 
@@ -1647,6 +1713,8 @@ async function saveSettings() {
       model:           currentProvider === 'ollama'
         ? (($('ollamaTextModelInput')?.value.trim() || $('ollamaVisionModelInput')?.value.trim() || $('modelInput')?.value.trim() || ''))
         : (currentProvider === 'custom' ? ($('customModelInput')?.value.trim() || '') : ($('modelInput')?.value.trim() || '')),
+      providerApiKeys: providerApiKeysDraft,
+      providerModels:  providerModelsDraft,
       ollamaTextModel: currentProvider === 'ollama' ? ($('ollamaTextModelInput')?.value.trim() || '') : '',
       ollamaVisionModel: currentProvider === 'ollama' ? ($('ollamaVisionModelInput')?.value.trim() || '') : '',
       maxSteps:        maxStepsInput ? (parseInt(maxStepsInput.value) || 20) : 20,
@@ -1672,6 +1740,8 @@ async function saveSettings() {
 
     chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings }, () => {
       if (chrome.runtime.lastError) return;
+      providerApiKeys = sanitizeProviderMap(settings.providerApiKeys);
+      providerModels = sanitizeProviderMap(settings.providerModels);
       updateApiStatus(settings);
       updateDrStatus(settings);
       updateModelPill(settings.provider, settings.provider === 'ollama' ? getDisplayedOllamaModel(settings) : settings.model);

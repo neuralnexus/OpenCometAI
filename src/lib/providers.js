@@ -15,16 +15,16 @@ export function getProviderCapabilities(settings = {}) {
   const customVision = Boolean(settings.providerSupportsVision);
 
   const registry = {
-    openai:    { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'gpt-4o' },
-    anthropic: { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'claude-sonnet-4-20250514' },
-    gemini:    { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'gemini-1.5-flash' },
+    openai:    { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'gpt-5.4' },
+    anthropic: { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'claude-opus-4-7' },
+    gemini:    { vision: true,  json: true, attachments: true,  browserAgentSafe: true,  defaultModel: 'gemini-3.1-flash-lite-preview' },
     groq:      { vision: false, json: true, attachments: false, browserAgentSafe: false, defaultModel: 'llama-3.3-70b-versatile' },
     mistral:   {
-      vision:           supportsMistralVision(model || 'mistral-small-2506'),
+      vision:           supportsMistralVision(model || 'devstral-2512'),
       json:             true,
       attachments:      true,
-      browserAgentSafe: supportsMistralVision(model || 'mistral-small-2506'),
-      defaultModel:     'mistral-small-2506',
+      browserAgentSafe: supportsMistralVision(model || 'devstral-2512'),
+      defaultModel:     'devstral-2512',
     },
     ollama: {
       vision:           supportsOllamaVision(ollamaVisionModel || 'llava:7b'),
@@ -68,18 +68,20 @@ export function getProviderCapabilities(settings = {}) {
 
 export function isProviderConfigured(settings = {}) {
   const provider = String(settings.provider || 'openai').toLowerCase();
+  const apiKey = resolveProviderApiKey(settings);
   if (provider === 'ollama') {
     return Boolean(resolveOllamaBaseUrl(settings));
   }
   if (['deepseek', 'kimi', 'glm', 'custom'].includes(provider)) {
-    return Boolean(String(resolveCompatibleBaseUrl(settings)).trim()) && Boolean(String(settings.apiKey || '').trim());
+    return Boolean(String(resolveCompatibleBaseUrl(settings)).trim()) && Boolean(String(apiKey || '').trim());
   }
-  return Boolean(String(settings.apiKey || '').trim());
+  return Boolean(String(apiKey || '').trim());
 }
 
 // ── Unified entry point ────────────────────────────────────────────────────────
 export async function callAI(settings, prompt, screenshotBase64 = null, options = {}) {
-  const { provider, apiKey, model } = settings;
+  const { provider, model } = settings;
+  const apiKey = resolveProviderApiKey(settings);
   const caps   = getProviderCapabilities(settings);
   const hasImageIntent = Boolean(screenshotBase64) || Boolean((options.images || []).length);
   const targetModel = provider === 'ollama'
@@ -109,7 +111,8 @@ export async function callAI(settings, prompt, screenshotBase64 = null, options 
  * parsed JSON. Used for prose responses (e.g. research report synthesis).
  */
 export async function callAIRaw(settings, prompt, options = {}) {
-  const { provider, apiKey, model } = settings;
+  const { provider, model } = settings;
+  const apiKey = resolveProviderApiKey(settings);
   const caps = getProviderCapabilities(settings);
   const m    = provider === 'ollama'
     ? resolveOllamaTextModel(settings)
@@ -639,7 +642,7 @@ function dedupeOllamaAttempts(attempts) {
 // ── Misc helpers ───────────────────────────────────────────────────────────────
 function supportsMistralVision(model) {
   const lower = String(model || '').toLowerCase();
-  return ['mistral-large', 'mistral-medium', 'mistral-small', 'ministral', 'pixtral', 'vision']
+  return ['mistral-large', 'mistral-medium', 'mistral-small', 'ministral', 'pixtral', 'vision', 'mistral-vibe', 'devstral']
     .some(kw => lower.includes(kw));
 }
 
@@ -676,7 +679,7 @@ function resolveOllamaBaseUrl(settings = {}) {
 
 function buildOllamaHeaders(settings = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  const apiKey = String(settings.apiKey || '').trim();
+  const apiKey = resolveProviderApiKey(settings);
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
   return headers;
 }
@@ -709,7 +712,7 @@ function resolveCompatibleBaseUrl(settings = {}) {
 }
 
 function buildCompatibleHeaders(settings = {}) {
-  const apiKey = String(settings.apiKey || '').trim();
+  const apiKey = resolveProviderApiKey(settings);
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -717,6 +720,16 @@ function buildCompatibleHeaders(settings = {}) {
   };
 
   return headers;
+}
+
+function resolveProviderApiKey(settings = {}) {
+  const provider = String(settings.provider || '').toLowerCase();
+  const map = settings.providerApiKeys;
+  if (map && typeof map === 'object' && !Array.isArray(map)) {
+    const scoped = String(map[provider] || '').trim();
+    if (scoped) return scoped;
+  }
+  return String(settings.apiKey || '').trim();
 }
 
 function providerLabel(provider) {
