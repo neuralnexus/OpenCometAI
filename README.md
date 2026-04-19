@@ -55,13 +55,12 @@ Open Comet is an autonomous AI agent that lives in your browser's side panel. It
     - Enable **Developer Mode** (top-right toggle).
     - Click **Load unpacked** and select the root directory (unzipped folder or cloned repo).
     - Pin **Open Comet** from your extensions menu.
-3.  **Account & License**:
-    - Create an account on [opencomet.onrender.com/profile](https://opencomet.onrender.com/profile).
-    - Generate a **License Key** from your dashboard.
-    - In the Open Comet extension, login with your credentials and add your **License Key**.
-4.  **Configuration**:
+3.  **Configuration**:
     - Open the side panel, go to **Settings**, and select your **Provider** and **Model**.
     - Add your **API Key** for the chosen provider.
+4.  **Privacy Controls**:
+    - Open Comet runs in local-first mode (no account or license activation required).
+    - Use **History → Clear** and **Token & Cost Usage → Clear all usage data** to remove local activity data.
 5.  **Run Your First Task**: Type a command in the input box and watch the agent work!
 
 ## 🗺️ Roadmap
