@@ -1,11 +1,7 @@
 {
   "name": "opencometai",
   "version": "1.0.0",
-  "description": "<p align=\"center\">   <img src=\"assets/icons/icon128.png\" width=\"100\" alt=\"Open Comet Logo\" /> </p>",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "description": "Local-first Chrome extension for browser automation with AI assistance",
   "scripts": {
     "test": "npm run check:static && npm run test:functional",
     "check:static": "node ./scripts/check-static.mjs",

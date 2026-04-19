@@ -64,7 +64,12 @@ function collectJsFiles(absDir) {
 
 function checkJsSyntax(absFiles) {
   for (const file of absFiles) {
-    const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+    const source = fs.readFileSync(file, 'utf8');
+    const result = spawnSync(
+      process.execPath,
+      ['--input-type=module', '--check'],
+      { encoding: 'utf8', input: source }
+    );
     if (result.status !== 0) {
       const rel = path.relative(repoRoot, file);
       const detail = (result.stderr || result.stdout || '').trim();
@@ -138,6 +143,7 @@ checkJsSyntax(jsFiles);
 
 if (errors.length) {
   console.error('Static checks failed:');
+  console.error(`${errors.length} error(s) found:\n`);
   for (const err of errors) {
     console.error(`- ${err}`);
   }

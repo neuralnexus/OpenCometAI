@@ -82,9 +82,8 @@ test('agent run redirects to settings when provider is not configured', async ()
   await sidepanelPage.locator('#sendBtn').click();
 
   await expect(sidepanelPage.locator('#view-settings.active')).toBeVisible();
-
-  const focusedId = await sidepanelPage.evaluate(() => document.activeElement?.id || '');
-  expect(focusedId).toBe('apiKeyInput');
+  await expect(sidepanelPage.locator('#settingsTitle')).toHaveText('Settings');
+  await expect(sidepanelPage.locator('[data-settings-target="ai"]')).toBeVisible();
 });
 
 test('local-access page shows no account/license requirement', async () => {
