@@ -352,6 +352,52 @@ function closeModelSelector() {
   if (dropdown) dropdown.classList.remove('open');
 }
 
+function getProviderTitle(provider) {
+  const key = String(provider || '').toLowerCase();
+  const names = {
+    openai: 'OpenAI',
+    anthropic: 'Anthropic',
+    gemini: 'Google Gemini',
+    groq: 'Groq',
+    mistral: 'Mistral',
+    deepseek: 'DeepSeek',
+    kimi: 'Kimi',
+    glm: 'GLM',
+    custom: 'OpenAI Compatible',
+    ollama: 'Local (Ollama)',
+  };
+  return names[key] || key || 'Provider';
+}
+
+function isProviderEnabledInQuickSelector(provider, settings, scopedKeys) {
+  const key = String(provider || '').toLowerCase();
+  const activeProvider = String(settings.provider || 'openai').toLowerCase();
+  if (key === activeProvider) return true;
+  if (key === 'ollama') return Boolean(String(settings.ollamaBaseUrl || 'http://127.0.0.1:11434').trim());
+  return Boolean(String(scopedKeys[key] || '').trim());
+}
+
+function getProviderCurrentModel(provider, settings, scopedModels) {
+  const key = String(provider || '').toLowerCase();
+  if (key === 'ollama') {
+    return String(settings.ollamaTextModel || settings.model || '').trim();
+  }
+  return String(scopedModels[key] || (key === String(settings.provider || '').toLowerCase() ? settings.model : '') || '').trim();
+}
+
+function getQuickSelectorModels(provider, settings, scopedModels) {
+  const key = String(provider || '').toLowerCase();
+  const presetModels = key === 'ollama'
+    ? (ollamaModelCatalog.all.length ? ollamaModelCatalog.all : (PROVIDER_MODELS.ollama || []))
+    : (PROVIDER_MODELS[key] || []);
+  const currentModel = getProviderCurrentModel(key, settings, scopedModels);
+  if (key === 'custom') {
+    return currentModel ? [currentModel] : [];
+  }
+  const models = [...new Set([...presetModels, currentModel].filter(Boolean))];
+  return models;
+}
+
 async function toggleModelSelector() {
   const dropdown = $('modelSelectorDropdown');
   if (!dropdown) return;
@@ -362,30 +408,41 @@ async function toggleModelSelector() {
   }
 
   const settings = await getSettingsBg();
-  const provider = settings.provider || 'openai';
-  let models = PROVIDER_MODELS[provider] || [];
+  const activeProvider = String(settings.provider || 'openai').toLowerCase();
+  const scopedKeys = sanitizeProviderMap(settings.providerApiKeys);
+  const scopedModels = sanitizeProviderMap(settings.providerModels);
+  if (settings.apiKey && activeProvider !== 'ollama') scopedKeys[activeProvider] = String(settings.apiKey || '').trim();
+  if (settings.model && activeProvider !== 'ollama') scopedModels[activeProvider] = String(settings.model || '').trim();
 
-  if (provider === 'ollama') {
-    models = ollamaModelCatalog.all.length ? ollamaModelCatalog.all : PROVIDER_MODELS.ollama;
-  }
+  const providers = [activeProvider, ...Object.keys(PROVIDER_MODELS).filter(p => p !== activeProvider)]
+    .filter((provider, index, arr) => arr.indexOf(provider) === index)
+    .filter(provider => isProviderEnabledInQuickSelector(provider, settings, scopedKeys));
+  if (!providers.length) providers.push(activeProvider);
 
-  const currentModel = provider === 'ollama' 
-    ? (settings.ollamaTextModel || settings.model || '') 
-    : (settings.model || models[0] || '');
+  const html = providers.map(provider => {
+    const models = getQuickSelectorModels(provider, settings, scopedModels);
+    const currentModel = getProviderCurrentModel(provider, settings, scopedModels);
+    if (!models.length) return '';
+    return `
+      <div class="model-opt-group-label">${esc(getProviderTitle(provider))}</div>
+      ${models.map(m => `
+        <div class="model-opt-item${provider === activeProvider && m === currentModel ? ' selected' : ''}" data-provider="${esc(provider)}" data-model="${esc(m)}">
+          <span>${esc(m)}</span>
+          <svg class="opt-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="2,6 5,9 10,3"/>
+          </svg>
+        </div>
+      `).join('')}
+    `;
+  }).join('');
 
-  dropdown.innerHTML = models.map(m => `
-    <div class="model-opt-item${m === currentModel ? ' selected' : ''}" data-model="${esc(m)}">
-      <span>${esc(m)}</span>
-      <svg class="opt-check" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="2,6 5,9 10,3"/>
-      </svg>
-    </div>
-  `).join('') || '<div class="model-opt-item">No models found</div>';
+  dropdown.innerHTML = html || '<div class="model-opt-item">No models found</div>';
 
   dropdown.querySelectorAll('.model-opt-item').forEach(item => {
     item.addEventListener('click', () => {
+      const provider = item.dataset.provider;
       const selected = item.dataset.model;
-      if (selected) selectDropdownModel(provider, selected);
+      if (provider && selected) selectDropdownModel(provider, selected);
     });
   });
 
@@ -394,9 +451,18 @@ async function toggleModelSelector() {
 
 async function selectDropdownModel(provider, modelId) {
   const settings = await getSettingsBg();
+  const selectedProvider = String(provider || '').toLowerCase();
+  settings.provider = selectedProvider;
+  settings.providerApiKeys = sanitizeProviderMap(settings.providerApiKeys);
+  settings.providerModels = sanitizeProviderMap(settings.providerModels);
+  settings.providerModels[selectedProvider] = modelId;
+  settings.apiKey = selectedProvider === 'ollama' ? '' : String(settings.providerApiKeys[selectedProvider] || '').trim();
   settings.model = modelId;
+  if (['deepseek', 'kimi', 'glm'].includes(selectedProvider) && !String(settings.providerBaseUrl || '').trim()) {
+    settings.providerBaseUrl = getProviderDefaultBaseUrl(selectedProvider);
+  }
   
-  if (provider === 'ollama') {
+  if (selectedProvider === 'ollama') {
     settings.ollamaTextModel = modelId;
     // For simplicity, we set both to the same if selecting from this quick menu
     settings.ollamaVisionModel = modelId;
@@ -404,14 +470,16 @@ async function selectDropdownModel(provider, modelId) {
 
   chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings }, () => {
     if (chrome.runtime.lastError) return;
-    updateModelPill(provider, provider === 'ollama' ? getDisplayedOllamaModel(settings) : modelId);
+    currentProvider = selectedProvider;
+    providerApiKeys = sanitizeProviderMap(settings.providerApiKeys);
+    providerModels = sanitizeProviderMap(settings.providerModels);
+    document.querySelectorAll('.provider-card').forEach(c => c.classList.toggle('selected', c.dataset.provider === selectedProvider));
+    applyProviderDraft(selectedProvider);
+    renderModelChips(selectedProvider);
+    updateConnectionFields(selectedProvider);
+    updateApiStatus(settings);
+    updateModelPill(selectedProvider, selectedProvider === 'ollama' ? getDisplayedOllamaModel(settings) : modelId);
     closeModelSelector();
-    
-    // Also update settings view if it's open or loaded
-    const modelInput = $('modelInput');
-    if (modelInput) modelInput.value = modelId;
-    const ollamaText = $('ollamaTextModelInput');
-    if (ollamaText) ollamaText.value = modelId;
   });
 }
 
